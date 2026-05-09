@@ -604,10 +604,10 @@ footer a{color:var(--purple);text-decoration:none}
 // CONFIG — GANTI DENGAN KEY KAMU
 // ═══════════════════════════════════════
 const CONFIG = {
-  OPENROUTER_KEY: 'YOUR_OPENROUTER_KEY_HERE', // ← ganti dengan OpenRouter key kamu (sk-or-v1-...)
+  WORKER_URL: 'https://quote-proxy.alviansyahny100.workers.dev', // Cloudflare Worker proxy
   SUPABASE_URL: 'https://djrxcalcyvihlwzqbdof.supabase.co',
   SUPABASE_KEY: 'sb_publishable_l3mhmF8iubNOJjkBn4fiow_OUaqj9az',
-  MODEL: 'openai/gpt-4o-mini', // model AI yang dipakai
+  MODEL: 'openai/gpt-4o-mini',
 };
 
 // ═══════════════════════════════════════
@@ -644,11 +644,6 @@ async function generateQuote() {
   if (!kw2)  { showError('Kata kedua belum diisi nih!'); return; }
   errEl.style.display = 'none';
 
-  if (CONFIG.OPENROUTER_KEY === 'YOUR_OPENROUTER_KEY_HERE') {
-    showError('⚠️ Ganti dulu OPENROUTER_KEY di baris CONFIG di dalam file index.html!');
-    return;
-  }
-
   setLoading(true);
 
   const vibeDesc = {
@@ -675,13 +670,10 @@ Aturan:
 - Output HANYA quote-nya saja, tidak ada penjelasan lain`;
 
   try {
-    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    const res = await fetch(CONFIG.WORKER_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${CONFIG.OPENROUTER_KEY}`,
-        'HTTP-Referer': window.location.href,
-        'X-Title': 'Quote Cloud',
       },
       body: JSON.stringify({
         model: CONFIG.MODEL,
