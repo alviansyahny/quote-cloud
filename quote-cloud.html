@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quote Cloud ☁️ — Buat Quote Kamu Sendiri</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+/* ═══════════ RESET & BASE ═══════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#06060f;
+  --surface:rgba(255,255,255,0.04);
+  --surface2:rgba(255,255,255,0.07);
+  --border:rgba(196,181,253,0.12);
+  --border2:rgba(196,181,253,0.22);
+  --text:#f0ecff;
+  --muted:rgba(240,236,255,0.45);
+  --muted2:rgba(240,236,255,0.25);
+  --purple:#a78bfa;
+  --blue:#60a5fa;
+  --pink:#f472b6;
+  --teal:#2dd4bf;
+  --amber:#fbbf24;
+  --grad:linear-gradient(135deg,#c084fc,#818cf8,#38bdf8);
+  --grad2:linear-gradient(135deg,#f472b6,#c084fc,#818cf8);
+  --font-ui:'Syne',sans-serif;
+  --font-quote:'DM Serif Display',serif;
+  --font-body:'DM Sans',sans-serif;
+  --radius:16px;
+  --radius-sm:10px;
+  --glow-purple:0 0 60px rgba(167,139,250,0.15);
+  --glow-pink:0 0 60px rgba(244,114,182,0.15);
+}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--font-body);
+  min-height:100vh;
+  overflow-x:hidden;
+  cursor:default;
+}
+
+/* ═══════════ GRAIN OVERLAY ═══════════ */
+#grain{
+  position:fixed;inset:0;z-index:1;pointer-events:none;
+  opacity:0.04;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-size:200px 200px;
+}
+
+/* ═══════════ ANIMATED BLOBS ═══════════ */
+#blobs{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.blob{
+  position:absolute;border-radius:50%;filter:blur(100px);opacity:0.18;
+  animation:blobFloat var(--dur,20s) ease-in-out infinite;
+}
+.b1{width:600px;height:600px;background:#7c3aed;top:-100px;left:-150px;--dur:22s}
+.b2{width:500px;height:500px;background:#1d4ed8;top:30%;right:-100px;--dur:28s;animation-delay:-8s}
+.b3{width:450px;height:450px;background:#be185d;bottom:-50px;left:30%;--dur:18s;animation-delay:-14s}
+.b4{width:350px;height:350px;background:#0f766e;top:60%;left:-80px;--dur:24s;animation-delay:-5s}
+@keyframes blobFloat{
+  0%,100%{transform:translate(0,0) scale(1)}
+  33%{transform:translate(40px,-60px) scale(1.08)}
+  66%{transform:translate(-30px,40px) scale(0.95)}
+}
+
+/* ═══════════ TICKER ═══════════ */
+#ticker-wrap{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  height:36px;
+  background:rgba(6,6,15,0.8);
+  border-bottom:1px solid var(--border);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  overflow:hidden;
+  display:flex;align-items:center;
+}
+.ticker-label{
+  flex-shrink:0;
+  padding:0 14px;
+  font-family:var(--font-ui);
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:0.15em;
+  text-transform:uppercase;
+  color:var(--purple);
+  border-right:1px solid var(--border);
+  height:100%;display:flex;align-items:center;gap:6px;white-space:nowrap;
+}
+.live-dot{
+  width:6px;height:6px;border-radius:50%;background:#4ade80;
+  animation:livePulse 1.5s ease-in-out infinite;
+  flex-shrink:0;
+}
+@keyframes livePulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.8)}}
+.ticker-track{
+  display:flex;gap:0;align-items:center;
+  white-space:nowrap;
+  animation:tickerScroll 30s linear infinite;
+}
+.ticker-track:hover{animation-play-state:paused}
+@keyframes tickerScroll{
+  0%{transform:translateX(0)}
+  100%{transform:translateX(-50%)}
+}
+.ticker-item{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:0 24px;
+  font-size:12px;
+  color:var(--muted);
+  border-right:1px solid var(--border);
+}
+.ticker-item span{color:var(--text);font-weight:500}
+
+/* ═══════════ MAIN LAYOUT ═══════════ */
+main{
+  position:relative;z-index:2;
+  max-width:680px;margin:0 auto;
+  padding:80px 20px 80px;
+}
+
+/* ═══════════ HERO ═══════════ */
+.hero{text-align:center;padding:40px 0 48px;animation:fadeUp 0.8s ease both}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:6px 16px;border-radius:99px;
+  background:rgba(167,139,250,0.1);
+  border:1px solid rgba(167,139,250,0.25);
+  font-family:var(--font-ui);
+  font-size:11px;font-weight:600;letter-spacing:0.12em;
+  text-transform:uppercase;color:var(--purple);
+  margin-bottom:24px;
+}
+.hero-title{
+  font-family:var(--font-ui);
+  font-size:clamp(3rem,9vw,5.5rem);
+  font-weight:800;
+  line-height:0.95;
+  letter-spacing:-0.02em;
+  background:var(--grad);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+  margin-bottom:8px;
+}
+.hero-cloud{
+  font-size:clamp(2.5rem,8vw,4.5rem);
+  -webkit-text-fill-color:initial;
+  display:inline-block;
+  animation:cloudFloat 4s ease-in-out infinite;
+}
+@keyframes cloudFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.hero-sub{
+  font-size:clamp(1rem,2.5vw,1.2rem);
+  color:var(--muted);
+  font-weight:300;
+  margin-bottom:32px;
+  line-height:1.6;
+}
+.hero-sub em{color:var(--text);font-style:normal;font-weight:400}
+.hero-stats{
+  display:flex;justify-content:center;gap:32px;
+  flex-wrap:wrap;
+}
+.stat{display:flex;flex-direction:column;align-items:center;gap:2px}
+.stat-num{
+  font-family:var(--font-ui);font-size:1.5rem;font-weight:800;
+  background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.stat-label{font-size:11px;color:var(--muted2);letter-spacing:0.08em;text-transform:uppercase}
+
+/* ═══════════ GLASS CARD ═══════════ */
+.glass-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  backdrop-filter:blur(24px);
+  -webkit-backdrop-filter:blur(24px);
+  padding:2rem;
+  transition:border-color 0.3s;
+}
+.glass-card:hover{border-color:var(--border2)}
+
+/* ═══════════ FORM ═══════════ */
+.form-wrap{animation:fadeUp 0.8s 0.15s ease both}
+.form-section{margin-bottom:1.5rem}
+.form-label{
+  display:block;
+  font-family:var(--font-ui);
+  font-size:11px;font-weight:700;
+  letter-spacing:0.12em;text-transform:uppercase;
+  color:var(--purple);margin-bottom:10px;
+}
+.input-field{
+  width:100%;
+  background:rgba(255,255,255,0.04);
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  padding:14px 16px;
+  font-family:var(--font-body);
+  font-size:15px;color:var(--text);
+  outline:none;transition:all 0.2s;
+}
+.input-field::placeholder{color:var(--muted2)}
+.input-field:focus{
+  border-color:rgba(167,139,250,0.5);
+  background:rgba(167,139,250,0.06);
+  box-shadow:0 0 0 3px rgba(167,139,250,0.08);
+}
+.input-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:480px){.input-row{grid-template-columns:1fr}}
+
+/* ═══════════ VIBE SELECTOR ═══════════ */
+.vibe-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
+}
+@media(max-width:400px){.vibe-grid{grid-template-columns:repeat(2,1fr)}}
+.vibe-btn{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:4px;padding:12px 8px;
+  background:rgba(255,255,255,0.03);
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  cursor:pointer;transition:all 0.2s;
+  font-family:var(--font-body);
+}
+.vibe-btn:hover{background:rgba(255,255,255,0.07);border-color:var(--border2)}
+.vibe-btn.active{
+  background:rgba(167,139,250,0.12);
+  border-color:rgba(167,139,250,0.5);
+  box-shadow:0 0 20px rgba(167,139,250,0.1);
+}
+.vibe-emoji{font-size:1.4rem;line-height:1}
+.vibe-label{font-size:11px;color:var(--muted);font-weight:500}
+.vibe-btn.active .vibe-label{color:var(--purple)}
+
+/* ═══════════ GENERATE BUTTON ═══════════ */
+.btn-generate{
+  width:100%;padding:16px;
+  background:var(--grad);
+  border:none;border-radius:var(--radius-sm);
+  font-family:var(--font-ui);
+  font-size:15px;font-weight:700;
+  letter-spacing:0.05em;color:white;
+  cursor:pointer;transition:all 0.2s;
+  position:relative;overflow:hidden;
+  margin-top:8px;
+}
+.btn-generate::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,0.15),transparent);
+  opacity:0;transition:opacity 0.2s;
+}
+.btn-generate:hover::before{opacity:1}
+.btn-generate:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(167,139,250,0.35)}
+.btn-generate:active{transform:translateY(0)}
+.btn-generate:disabled{opacity:0.6;cursor:not-allowed;transform:none}
+.btn-generate.loading{pointer-events:none}
+.loading-dots span{animation:dotPulse 1.2s ease-in-out infinite}
+.loading-dots span:nth-child(2){animation-delay:0.2s}
+.loading-dots span:nth-child(3){animation-delay:0.4s}
+@keyframes dotPulse{0%,80%,100%{opacity:0.3}40%{opacity:1}}
+
+/* ═══════════ RESULT CARD ═══════════ */
+#result-section{display:none;animation:fadeUp 0.6s ease both}
+.result-card{
+  background:linear-gradient(135deg,rgba(124,58,237,0.1),rgba(30,64,175,0.08),rgba(190,24,93,0.08));
+  border:1px solid rgba(196,181,253,0.2);
+  border-radius:var(--radius);
+  padding:2.5rem 2rem;
+  position:relative;overflow:hidden;
+  margin-bottom:1rem;
+}
+.result-card::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(167,139,250,0.05),transparent,rgba(244,114,182,0.05));
+  pointer-events:none;
+}
+.quote-mark{
+  font-family:var(--font-quote);
+  font-size:5rem;line-height:0.5;
+  color:rgba(167,139,250,0.25);
+  margin-bottom:1rem;display:block;
+}
+.quote-text{
+  font-family:var(--font-quote);
+  font-style:italic;
+  font-size:clamp(1.3rem,3.5vw,1.7rem);
+  line-height:1.5;
+  color:var(--text);
+  margin-bottom:1.5rem;
+  position:relative;
+}
+.quote-meta{
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:1.5rem;
+}
+.meta-name{
+  font-family:var(--font-ui);
+  font-size:13px;font-weight:700;
+  color:var(--purple);
+}
+.meta-divider{color:var(--muted2);font-size:10px}
+.tag{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:3px 10px;border-radius:99px;
+  font-size:11px;font-weight:500;font-family:var(--font-body);
+}
+.tag-keyword{
+  background:rgba(96,165,250,0.12);
+  border:1px solid rgba(96,165,250,0.25);
+  color:var(--blue);
+}
+.tag-vibe{
+  background:rgba(244,114,182,0.12);
+  border:1px solid rgba(244,114,182,0.25);
+  color:var(--pink);
+}
+.result-actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn-action{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:10px 18px;border-radius:var(--radius-sm);
+  font-family:var(--font-ui);font-size:12px;font-weight:700;
+  letter-spacing:0.05em;cursor:pointer;transition:all 0.2s;border:none;
+}
+.btn-copy{
+  background:rgba(167,139,250,0.12);
+  border:1px solid rgba(167,139,250,0.3);
+  color:var(--purple);
+}
+.btn-copy:hover{background:rgba(167,139,250,0.2)}
+.btn-copy.copied{background:rgba(74,222,128,0.12);border-color:rgba(74,222,128,0.3);color:#4ade80}
+.btn-regen{
+  background:rgba(255,255,255,0.05);
+  border:1px solid var(--border);
+  color:var(--muted);
+}
+.btn-regen:hover{background:rgba(255,255,255,0.1);color:var(--text)}
+.btn-share{
+  background:var(--grad2);
+  color:white;
+  margin-left:auto;
+}
+.btn-share:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(244,114,182,0.3)}
+
+/* ═══════════ RECENT QUOTES ═══════════ */
+#recent-section{animation:fadeUp 0.8s 0.3s ease both}
+.section-title{
+  font-family:var(--font-ui);
+  font-size:12px;font-weight:700;
+  letter-spacing:0.15em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:1rem;
+  display:flex;align-items:center;gap:8px;
+}
+.section-title::after{content:'';flex:1;height:1px;background:var(--border)}
+.recent-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:480px){.recent-grid{grid-template-columns:1fr}}
+.recent-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  padding:14px;
+  cursor:pointer;transition:all 0.2s;
+}
+.recent-card:hover{background:var(--surface2);border-color:var(--border2);transform:translateY(-2px)}
+.recent-quote{
+  font-family:var(--font-quote);
+  font-style:italic;
+  font-size:13px;line-height:1.6;
+  color:var(--text);margin-bottom:8px;
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;
+}
+.recent-meta{display:flex;align-items:center;gap:6px}
+.recent-name{font-size:11px;color:var(--purple);font-family:var(--font-ui);font-weight:600}
+.recent-time{font-size:10px;color:var(--muted2)}
+.recent-empty{
+  grid-column:1/-1;text-align:center;padding:2rem;
+  color:var(--muted2);font-size:13px;
+}
+
+/* ═══════════ TOAST ═══════════ */
+#toast{
+  position:fixed;bottom:24px;right:24px;z-index:200;
+  display:flex;flex-direction:column;gap:8px;
+  pointer-events:none;
+}
+.toast-item{
+  display:flex;align-items:center;gap:10px;
+  background:rgba(15,15,30,0.95);
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  padding:12px 16px;
+  backdrop-filter:blur(20px);
+  font-size:13px;color:var(--text);
+  animation:toastIn 0.4s ease both;
+  max-width:300px;
+  box-shadow:var(--glow-purple);
+}
+.toast-emoji{font-size:1.1rem}
+.toast-text{line-height:1.4}
+.toast-text b{color:var(--purple)}
+@keyframes toastIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+@keyframes toastOut{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(20px)}}
+
+/* ═══════════ FOOTER ═══════════ */
+footer{
+  position:relative;z-index:2;
+  text-align:center;padding:2rem;
+  font-size:12px;color:var(--muted2);
+  border-top:1px solid var(--border);
+}
+footer a{color:var(--purple);text-decoration:none}
+
+/* ═══════════ ANIMATIONS ═══════════ */
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(24px)}
+  to{opacity:1;transform:translateY(0)}
+}
+@keyframes shimmer{
+  0%{background-position:200% 0}
+  100%{background-position:-200% 0}
+}
+.skeleton{
+  background:linear-gradient(90deg,rgba(255,255,255,0.04) 25%,rgba(255,255,255,0.08) 50%,rgba(255,255,255,0.04) 75%);
+  background-size:200% 100%;
+  animation:shimmer 1.5s infinite;
+  border-radius:8px;
+}
+
+/* ═══════════ DIVIDER ═══════════ */
+.section-gap{height:40px}
+
+/* ═══════════ SCROLLBAR ═══════════ */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(167,139,250,0.3);border-radius:99px}
+</style>
+</head>
+<body>
+
+<!-- Grain + Blobs -->
+<div id="grain"></div>
+<div id="blobs">
+  <div class="blob b1"></div>
+  <div class="blob b2"></div>
+  <div class="blob b3"></div>
+  <div class="blob b4"></div>
+</div>
+
+<!-- Live Ticker -->
+<div id="ticker-wrap">
+  <div class="ticker-label">
+    <div class="live-dot"></div>
+    Live
+  </div>
+  <div style="overflow:hidden;flex:1">
+    <div class="ticker-track" id="ticker-track">
+      <div class="ticker-item">✨ <span>Quote Cloud</span> — tempat lahirnya kata-kata</div>
+      <div class="ticker-item">🌙 Buat quote kamu sendiri dengan AI</div>
+      <div class="ticker-item">💫 Masukkan nama + kata kunci + vibe</div>
+      <div class="ticker-item">⚡ Powered by AI · Real-time · Gratis</div>
+      <div class="ticker-item">✨ <span>Quote Cloud</span> — tempat lahirnya kata-kata</div>
+      <div class="ticker-item">🌙 Buat quote kamu sendiri dengan AI</div>
+      <div class="ticker-item">💫 Masukkan nama + kata kunci + vibe</div>
+      <div class="ticker-item">⚡ Powered by AI · Real-time · Gratis</div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<main>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-badge">✦ AI Quote Generator</div>
+    <h1 class="hero-title">
+      Quote<br>Cloud <span class="hero-cloud">☁️</span>
+    </h1>
+    <p class="hero-sub">
+      Ketik <em>namamu</em> dan <em>dua kata</em> yang kamu rasain.<br>
+      Biarkan AI bikin quote yang cuma milik kamu.
+    </p>
+    <div class="hero-stats">
+      <div class="stat">
+        <div class="stat-num" id="total-count">—</div>
+        <div class="stat-label">Quote Dibuat</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num" id="today-count">—</div>
+        <div class="stat-label">Hari Ini</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">6</div>
+        <div class="stat-label">Vibe Tersedia</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FORM CARD -->
+  <div class="form-wrap">
+    <div class="glass-card">
+      
+      <!-- Nama -->
+      <div class="form-section">
+        <label class="form-label">✦ Nama Kamu</label>
+        <input class="input-field" id="input-name" type="text" placeholder="e.g. Alvin, Rani, Rizky..." autocomplete="off" maxlength="30">
+      </div>
+
+      <!-- 2 Kata Kunci -->
+      <div class="form-section">
+        <label class="form-label">✦ Dua Kata Kunci</label>
+        <div class="input-row">
+          <input class="input-field" id="input-kw1" type="text" placeholder="Kata pertama... e.g. bahagia" autocomplete="off" maxlength="20">
+          <input class="input-field" id="input-kw2" type="text" placeholder="Kata kedua... e.g. sepi" autocomplete="off" maxlength="20">
+        </div>
+      </div>
+
+      <!-- Pilih Vibe -->
+      <div class="form-section">
+        <label class="form-label">✦ Pilih Vibe</label>
+        <div class="vibe-grid">
+          <button class="vibe-btn active" data-vibe="Malam" onclick="selectVibe(this)">
+            <span class="vibe-emoji">🌙</span>
+            <span class="vibe-label">Malam</span>
+          </button>
+          <button class="vibe-btn" data-vibe="Motivasi" onclick="selectVibe(this)">
+            <span class="vibe-emoji">💫</span>
+            <span class="vibe-label">Motivasi</span>
+          </button>
+          <button class="vibe-btn" data-vibe="Bucin" onclick="selectVibe(this)">
+            <span class="vibe-emoji">💔</span>
+            <span class="vibe-label">Bucin</span>
+          </button>
+          <button class="vibe-btn" data-vibe="Healing" onclick="selectVibe(this)">
+            <span class="vibe-emoji">🌿</span>
+            <span class="vibe-label">Healing</span>
+          </button>
+          <button class="vibe-btn" data-vibe="Hustle" onclick="selectVibe(this)">
+            <span class="vibe-emoji">🔥</span>
+            <span class="vibe-label">Hustle</span>
+          </button>
+          <button class="vibe-btn" data-vibe="Receh" onclick="selectVibe(this)">
+            <span class="vibe-emoji">😂</span>
+            <span class="vibe-label">Receh</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Error msg -->
+      <div id="form-error" style="color:#f87171;font-size:13px;margin-bottom:12px;display:none;animation:fadeUp 0.3s ease"></div>
+
+      <!-- Generate Button -->
+      <button class="btn-generate" id="btn-generate" onclick="generateQuote()">
+        <span id="btn-text">✨ Generate Quote</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="section-gap"></div>
+
+  <!-- RESULT SECTION -->
+  <div id="result-section">
+    <div class="result-card" id="result-card">
+      <span class="quote-mark">"</span>
+      <p class="quote-text" id="quote-text"></p>
+      <div class="quote-meta" id="quote-meta"></div>
+      <div class="result-actions">
+        <button class="btn-action btn-copy" id="btn-copy" onclick="copyQuote()">
+          📋 Salin Quote
+        </button>
+        <button class="btn-action btn-regen" onclick="generateQuote()">
+          🔄 Generate Ulang
+        </button>
+        <button class="btn-action btn-share" onclick="shareQuote()">
+          ✨ Share
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-gap"></div>
+
+  <!-- RECENT SECTION -->
+  <div id="recent-section">
+    <div class="section-title">Quote Terbaru</div>
+    <div class="recent-grid" id="recent-grid">
+      <div class="recent-empty">Belum ada quote. Jadilah yang pertama! 🌙</div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  Dibuat dengan ☁️ oleh <a href="#">Quote Cloud</a> · AI-powered · 2025
+</footer>
+
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════
+// CONFIG — GANTI DENGAN KEY KAMU
+// ═══════════════════════════════════════
+const CONFIG = {
+  OPENROUTER_KEY: 'YOUR_OPENROUTER_KEY_HERE', // ← ganti dengan OpenRouter key kamu (sk-or-v1-...)
+  SUPABASE_URL: 'https://djrxcalcyvihlwzqbdof.supabase.co',
+  SUPABASE_KEY: 'sb_publishable_l3mhmF8iubNOJjkBn4fiow_OUaqj9az',
+  MODEL: 'openai/gpt-4o-mini', // model AI yang dipakai
+};
+
+// ═══════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════
+let selectedVibe = 'Malam';
+let currentQuote = '';
+let currentName = '';
+let pollInterval = null;
+let lastQuoteId = 0;
+let knownIds = new Set();
+
+// ═══════════════════════════════════════
+// VIBE SELECTOR
+// ═══════════════════════════════════════
+function selectVibe(el) {
+  document.querySelectorAll('.vibe-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  selectedVibe = el.dataset.vibe;
+}
+
+// ═══════════════════════════════════════
+// GENERATE QUOTE
+// ═══════════════════════════════════════
+async function generateQuote() {
+  const name = document.getElementById('input-name').value.trim();
+  const kw1  = document.getElementById('input-kw1').value.trim();
+  const kw2  = document.getElementById('input-kw2').value.trim();
+  const errEl = document.getElementById('form-error');
+
+  // Validasi
+  if (!name) { showError('Masukkan nama kamu dulu ya! 👀'); return; }
+  if (!kw1)  { showError('Kata pertama belum diisi nih!'); return; }
+  if (!kw2)  { showError('Kata kedua belum diisi nih!'); return; }
+  errEl.style.display = 'none';
+
+  if (CONFIG.OPENROUTER_KEY === 'YOUR_OPENROUTER_KEY_HERE') {
+    showError('⚠️ Ganti dulu OPENROUTER_KEY di baris CONFIG di dalam file index.html!');
+    return;
+  }
+
+  setLoading(true);
+
+  const vibeDesc = {
+    'Malam':   'gelap, puitis, reflektif, seperti malam yang sunyi',
+    'Motivasi':'energik, membara, penuh semangat untuk bangkit',
+    'Bucin':   'romantis, melankolis, tentang cinta dan kerinduan',
+    'Healing': 'tenang, damai, penuh penerimaan diri',
+    'Hustle':  'ambisius, grind, tentang kerja keras dan sukses',
+    'Receh':   'lucu, santai, agak absurd tapi tetap bermakna',
+  };
+
+  const prompt = `Kamu adalah penulis quote profesional yang menulis dalam Bahasa Indonesia yang puitis dan natural.
+
+Buat 1 quote original untuk seseorang bernama "${name}".
+Kata kunci: "${kw1}" dan "${kw2}"
+Vibe/tone: ${selectedVibe} — ${vibeDesc[selectedVibe] || 'kreatif'}
+
+Aturan:
+- Satu hingga dua kalimat saja, tidak lebih
+- Dalam Bahasa Indonesia yang indah dan mengalir
+- Boleh menyebut nama "${name}" di dalam quote atau tidak, sesuai feel
+- Quote harus terasa personal dan dalam, bukan klise
+- Jangan gunakan tanda kutip di awal/akhir
+- Output HANYA quote-nya saja, tidak ada penjelasan lain`;
+
+  try {
+    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${CONFIG.OPENROUTER_KEY}`,
+        'HTTP-Referer': window.location.href,
+        'X-Title': 'Quote Cloud',
+      },
+      body: JSON.stringify({
+        model: CONFIG.MODEL,
+        max_tokens: 200,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(()=>({}));
+      throw new Error(err?.error?.message || `HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+    const quote = data.choices?.[0]?.message?.content?.trim();
+
+    if (!quote) throw new Error('Quote kosong dari AI');
+
+    currentQuote = quote;
+    currentName  = name;
+
+    showResult(quote, name, kw1, kw2, selectedVibe);
+    await saveToSupabase(name, `${kw1}, ${kw2}`, quote, selectedVibe);
+
+  } catch (err) {
+    console.error(err);
+    showError(`Gagal generate: ${err.message}. Cek API key kamu!`);
+  } finally {
+    setLoading(false);
+  }
+}
+
+// ═══════════════════════════════════════
+// UI HELPERS
+// ═══════════════════════════════════════
+function setLoading(on) {
+  const btn = document.getElementById('btn-generate');
+  const txt = document.getElementById('btn-text');
+  btn.disabled = on;
+  if (on) {
+    btn.classList.add('loading');
+    txt.innerHTML = `<span class="loading-dots"><span>•</span><span>•</span><span>•</span></span> Lagi mikir yang dalam...`;
+  } else {
+    btn.classList.remove('loading');
+    txt.textContent = '✨ Generate Quote';
+  }
+}
+
+function showError(msg) {
+  const el = document.getElementById('form-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+  setLoading(false);
+}
+
+function showResult(quote, name, kw1, kw2, vibe) {
+  const kw1uc = kw1.charAt(0).toUpperCase()+kw1.slice(1);
+  const kw2uc = kw2.charAt(0).toUpperCase()+kw2.slice(1);
+
+  document.getElementById('quote-text').textContent = quote;
+  document.getElementById('quote-meta').innerHTML = `
+    <span class="meta-name">${name}</span>
+    <span class="meta-divider">·</span>
+    <span class="tag tag-keyword">${kw1uc}</span>
+    <span class="tag tag-keyword">${kw2uc}</span>
+    <span class="tag tag-vibe">${getVibeEmoji(vibe)} ${vibe}</span>
+  `;
+  document.getElementById('btn-copy').textContent = '📋 Salin Quote';
+  document.getElementById('btn-copy').classList.remove('copied');
+
+  const sec = document.getElementById('result-section');
+  sec.style.display = 'block';
+  sec.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function getVibeEmoji(v) {
+  return {Malam:'🌙',Motivasi:'💫',Bucin:'💔',Healing:'🌿',Hustle:'🔥',Receh:'😂'}[v]||'✨';
+}
+
+// ═══════════════════════════════════════
+// COPY QUOTE
+// ═══════════════════════════════════════
+function copyQuote() {
+  const text = `"${currentQuote}"\n— ${currentName} | Quote Cloud ☁️`;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('btn-copy');
+    btn.textContent = '✅ Tersalin!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = '📋 Salin Quote';
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+}
+
+// ═══════════════════════════════════════
+// SHARE
+// ═══════════════════════════════════════
+function shareQuote() {
+  const text = `"${currentQuote}" — ${currentName}\n\nBuat quote kamu di ${window.location.href}`;
+  if (navigator.share) {
+    navigator.share({ title: 'Quote Cloud ☁️', text });
+  } else {
+    navigator.clipboard.writeText(text);
+    showToast('💫', 'Link & quote', 'berhasil disalin!');
+  }
+}
+
+// ═══════════════════════════════════════
+// SUPABASE — SAVE
+// ═══════════════════════════════════════
+async function saveToSupabase(name, keywords, quote, vibe) {
+  try {
+    const res = await fetch(`${CONFIG.SUPABASE_URL}/rest/v1/quotes`, {
+      method: 'POST',
+      headers: {
+        'apikey': CONFIG.SUPABASE_KEY,
+        'Authorization': `Bearer ${CONFIG.SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation',
+      },
+      body: JSON.stringify({ name, keywords: `${keywords} · ${vibe}`, quote }),
+    });
+    if (res.ok) {
+      loadRecentQuotes();
+      loadStats();
+    }
+  } catch (e) {
+    console.warn('Supabase save failed:', e);
+  }
+}
+
+// ═══════════════════════════════════════
+// SUPABASE — LOAD RECENT
+// ═══════════════════════════════════════
+async function loadRecentQuotes() {
+  try {
+    const res = await fetch(
+      `${CONFIG.SUPABASE_URL}/rest/v1/quotes?order=created_at.desc&limit=6`,
+      {
+        headers: {
+          'apikey': CONFIG.SUPABASE_KEY,
+          'Authorization': `Bearer ${CONFIG.SUPABASE_KEY}`,
+        },
+      }
+    );
+    if (!res.ok) return;
+    const data = await res.json();
+    renderRecent(data);
+
+    // Cek quote baru buat notif
+    data.forEach(q => {
+      if (!knownIds.has(q.id)) {
+        if (knownIds.size > 0 && q.name !== currentName) {
+          showToast('🌙', q.name, `baru saja membuat quote!`);
+        }
+        knownIds.add(q.id);
+      }
+    });
+  } catch (e) {
+    console.warn('Supabase fetch failed:', e);
+  }
+}
+
+function renderRecent(quotes) {
+  const grid = document.getElementById('recent-grid');
+  if (!quotes.length) {
+    grid.innerHTML = '<div class="recent-empty">Belum ada quote. Jadilah yang pertama! 🌙</div>';
+    return;
+  }
+  grid.innerHTML = quotes.map(q => {
+    const timeAgo = getTimeAgo(q.created_at);
+    return `
+      <div class="recent-card">
+        <p class="recent-quote">"${escHtml(q.quote)}"</p>
+        <div class="recent-meta">
+          <span class="recent-name">${escHtml(q.name)}</span>
+          <span style="color:var(--muted2);font-size:10px">·</span>
+          <span class="recent-time">${timeAgo}</span>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════
+// SUPABASE — STATS
+// ═══════════════════════════════════════
+async function loadStats() {
+  try {
+    // Total
+    const r1 = await fetch(
+      `${CONFIG.SUPABASE_URL}/rest/v1/quotes?select=id`,
+      {
+        headers: {
+          'apikey': CONFIG.SUPABASE_KEY,
+          'Authorization': `Bearer ${CONFIG.SUPABASE_KEY}`,
+          'Prefer': 'count=exact',
+          'Range': '0-0',
+        },
+      }
+    );
+    const range = r1.headers.get('Content-Range');
+    const total = range ? range.split('/')[1] : '?';
+    document.getElementById('total-count').textContent = parseInt(total)||0;
+
+    // Today
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const r2 = await fetch(
+      `${CONFIG.SUPABASE_URL}/rest/v1/quotes?select=id&created_at=gte.${today.toISOString()}`,
+      {
+        headers: {
+          'apikey': CONFIG.SUPABASE_KEY,
+          'Authorization': `Bearer ${CONFIG.SUPABASE_KEY}`,
+          'Prefer': 'count=exact',
+          'Range': '0-0',
+        },
+      }
+    );
+    const range2 = r2.headers.get('Content-Range');
+    const todayCount = range2 ? range2.split('/')[1] : '?';
+    document.getElementById('today-count').textContent = parseInt(todayCount)||0;
+  } catch(e) {
+    document.getElementById('total-count').textContent = '✨';
+    document.getElementById('today-count').textContent = '✨';
+  }
+}
+
+// ═══════════════════════════════════════
+// TICKER UPDATE
+// ═══════════════════════════════════════
+async function updateTicker() {
+  try {
+    const res = await fetch(
+      `${CONFIG.SUPABASE_URL}/rest/v1/quotes?order=created_at.desc&limit=8`,
+      {
+        headers: {
+          'apikey': CONFIG.SUPABASE_KEY,
+          'Authorization': `Bearer ${CONFIG.SUPABASE_KEY}`,
+        },
+      }
+    );
+    if (!res.ok) return;
+    const data = await res.json();
+    if (!data.length) return;
+
+    const items = [...data, ...data].map(q =>
+      `<div class="ticker-item">🌙 <span>${escHtml(q.name)}</span> membuat quote tentang "${escHtml(q.keywords?.split('·')[0]?.trim()||'sesuatu')}"</div>`
+    ).join('');
+    document.getElementById('ticker-track').innerHTML = items;
+  } catch(e) {}
+}
+
+// ═══════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════
+function showToast(emoji, name, msg) {
+  const container = document.getElementById('toast');
+  const el = document.createElement('div');
+  el.className = 'toast-item';
+  el.innerHTML = `<span class="toast-emoji">${emoji}</span><div class="toast-text"><b>${escHtml(name)}</b> ${escHtml(msg)}</div>`;
+  container.appendChild(el);
+  setTimeout(() => {
+    el.style.animation = 'toastOut 0.4s ease forwards';
+    setTimeout(() => el.remove(), 400);
+  }, 4000);
+}
+
+// ═══════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════
+function escHtml(str) {
+  return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function getTimeAgo(dateStr) {
+  const diff = (Date.now() - new Date(dateStr)) / 1000;
+  if (diff < 60) return 'baru saja';
+  if (diff < 3600) return `${Math.floor(diff/60)} mnt lalu`;
+  if (diff < 86400) return `${Math.floor(diff/3600)} jam lalu`;
+  return `${Math.floor(diff/86400)} hari lalu`;
+}
+
+// ═══════════════════════════════════════
+// ENTER KEY SUPPORT
+// ═══════════════════════════════════════
+['input-name','input-kw1','input-kw2'].forEach(id => {
+  document.getElementById(id).addEventListener('keydown', e => {
+    if (e.key === 'Enter') generateQuote();
+  });
+});
+
+// ═══════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════
+(async function init() {
+  await loadRecentQuotes();
+  await loadStats();
+  await updateTicker();
+
+  // Poll tiap 8 detik
+  setInterval(async () => {
+    await loadRecentQuotes();
+    await loadStats();
+    await updateTicker();
+  }, 8000);
+})();
+</script>
+</body>
+</html>
